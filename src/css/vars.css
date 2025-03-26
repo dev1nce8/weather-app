@@ -1,0 +1,10 @@
+:root {
+  --clr-bg-prime: #f2efe7;
+  --clr-bg-second: #2973b2;
+  --clr-bg-accent: #48a6a7;
+
+  --clr-txt-dark: #2b2b28;
+  --clr-txt-light: #ebebe3;
+
+  --container-padding: 1rem 1.5rem;
+}
