@@ -1,59 +1,78 @@
 export default class Component {
-  #children;
-  #setupFunc;
-  #type;
-  constructor(type, attr) {
-    this.element = document.createElement(type);
-    this.attr = attr;
-    this.parent = null;
-    this.#type = type;
-    this.#children = [];
-    this.#setupFunc = null;
-  }
-
-  on(event, fn) {
-    this.element.addEventListener(event, fn);
+  static root = null;
+  static events = {};
+  constructor(type) {
+    this.html = document.createElement(type);
+    this.fn = null;
+    this.attr = {};
   }
 
   setup(fn) {
-    this.#setupFunc = fn ? fn : () => {};
-    this.runSetup(this);
+    this.fn = fn ? fn : () => {};
+    this.render();
     return this;
   }
 
   render() {
-    this.element = document.createElement(this.#type);
-    this.runSetup(this);
-    this.#appendChildren();
-    return this.element;
-  }
-
-  children(childArray) {
-    this.#children = childArray;
-    return this.#children;
-  }
-
-  #setAttributes() {
-    for (const key in this.attr) {
-      const item = this.attr[key];
-      this.element.setAttribute(key, item);
+    this.html.innerHTML = "";
+    this.#setAttr();
+    if (!this.fn) {
+      this.fn = () => {};
     }
+    this.fn(this);
+    return this;
   }
 
-  #appendChildren() {
-    this.#children.forEach((child) => {
-      if (child instanceof Component) {
-        child.parent = this;
-        child.runSetup(child);
-        this.element.append(child.render());
-      } else {
-        this.element.append(child);
+  string() {
+    return this.html.outerHTML;
+  }
+
+  children(...children) {
+    children.forEach((c) => {
+      if (c instanceof Component) {
+        c.render();
+        this.html.append(c.html);
+      } else if (typeof c === "string") {
+        this.html.innerHTML += c;
       }
     });
   }
 
-  runSetup() {
-    this.#setAttributes();
-    this.#setupFunc(this);
+  on(event, fn) {
+    this.html.addEventListener(event, fn);
+    return this;
+  }
+
+  attributes(object) {
+    this.attr = { ...this.attr, ...object };
+    this.render();
+    return this;
+  }
+
+  #setAttr() {
+    for (const key in this.attr) {
+      const item = this.attr[key];
+      this.html.setAttribute(key, item);
+    }
+  }
+
+  static emitter(event, fn) {
+    if (!this.events[event]) {
+      this.events[event] = [];
+    }
+    this.events[event].push(fn);
+  }
+
+  static emit(event, ...args) {
+    this.events[event].forEach((fn) => {
+      fn(...args);
+    });
+  }
+
+  static setRoot(id) {
+    this.root = document.getElementById(id);
+  }
+  static append(...element) {
+    this.root.append(...element);
   }
 }
